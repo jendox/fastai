@@ -1,7 +1,12 @@
 [project]
 name = "fastai"
 version = "0.1.0"
-description = "FastAI backend project."
+description = """
+FastAI is an AI-powered website generator built with FastAPI.
+It automates website creation using OpenAI, integrates with cloud storage,
+and provides a scalable backend for dynamic content generation.
+Perfect for learning FastAPI, AI APIs, and cloud deployment.
+"""
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
