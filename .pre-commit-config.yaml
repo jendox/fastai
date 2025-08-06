@@ -4,6 +4,8 @@ repos:
     rev: v5.0.0
     hooks:
       - id: check-added-large-files
+      - id: check-yaml
+      - id: check-json
 
   - repo: local
     hooks:
