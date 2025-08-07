@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from starlette.staticfiles import StaticFiles
 
 app = FastAPI(
     title="🚀 FastAI Website Generator – AI-Powered Instant Websites",
@@ -9,3 +10,5 @@ app = FastAPI(
                 "and entrepreneurs who want to automate website creation while mastering FastAPI, AI integration, "
                 "and cloud services.",
 )
+
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")

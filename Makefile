@@ -4,6 +4,9 @@ lint: ## Проверяет линтерами код в репозитории
 format: ## Запуск автоформатера
 	ruff check --fix ./src
 
+run: ## Запуск сервера uvicorn
+	uvicorn src.main:app --reload
+
 list: ## Отображает список доступных команд и их описания
 	@echo "Cписок доступных команд:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
