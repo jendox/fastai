@@ -7,7 +7,7 @@ SITE_TITLE_EXAMPLE = "Фан клуб Домино"
 SITE_PROMPT_EXAMPLE = "Сайт любителей играть в домино"
 
 user_response_example = {
-    "profile_id": "1",
+    "profile_id": 1,
     "email": "example@example.com",
     "username": "user123",
     "registered_at": datetime.fromisoformat("2025-06-15T18:29:56+00:00"),

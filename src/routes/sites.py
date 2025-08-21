@@ -1,8 +1,3 @@
-import asyncio
-import os
-from datetime import datetime
-from pathlib import Path
-
 from fastapi import APIRouter
 from starlette.responses import HTMLResponse, StreamingResponse
 
@@ -13,27 +8,9 @@ from src.schemas import (
     SiteNotFoundResponse,
     SiteResponse,
 )
-
-site_mock_data = {
-    "created_at": "2025-06-15T18:29:56+00:00",
-    "html_code_download_url": "https://dvmn.org/media/filer_public/d1/4b/d14bb4e8-d8b4-49cb-928d-fd04ecae46da/index.html?response-content-disposition=attachment",
-    "html_code_url": "https://dvmn.org/media/filer_public/d1/4b/d14bb4e8-d8b4-49cb-928d-fd04ecae46da/index.html",
-    "id": 1,
-    "prompt": "Стегозавры величественные гиганты Юрского периода",
-    "screenshot_url": "https://images.unsplash.com/photo-1729207512292-da69be60b05a",
-    "title": "Стегозавры",
-    "updated_at": datetime.fromisoformat("2025-06-15T18:29:56+00:00"),
-}
+from src.services import SiteService
 
 router = APIRouter(prefix="/sites")
-
-
-async def generate_site_mock(chunk_size: int = 1024):
-    path = Path(f"{os.getcwd()}/data/index.html")
-    with open(path, encoding="utf-8") as file:
-        while data := file.read(chunk_size):
-            yield data
-            await asyncio.sleep(1)
 
 
 @router.get(
@@ -44,7 +21,7 @@ async def generate_site_mock(chunk_size: int = 1024):
     response_model_by_alias=False,
 )
 async def get_my_sites() -> GeneratedSitesResponse:
-    return GeneratedSitesResponse(**{"sites": [site_mock_data]})
+    return GeneratedSitesResponse(**SiteService.get_my_sites())
 
 
 @router.post(
@@ -57,7 +34,7 @@ async def get_my_sites() -> GeneratedSitesResponse:
 async def create_site(
     request: CreateSiteRequest,
 ) -> SiteResponse:
-    return SiteResponse(**site_mock_data)
+    return SiteResponse(**SiteService.create_site())
 
 
 @router.post(
@@ -65,13 +42,24 @@ async def create_site(
     summary="Сгенерировать HTML код сайта",
     tags=["Sites"],
     response_class=HTMLResponse,
+    responses={
+        200: {
+            "description": "Successful Response",
+            "content": {
+                "text/html": {
+                    "example": "<html><body>Сгенерированный контент</body></html>",
+                },
+            },
+        },
+    },
 )
 async def generate_site(
     site_id: int,
     request: SiteGenerationRequest,
 ):
     return StreamingResponse(
-        content=generate_site_mock(),
+        content=SiteService.generate_html(request.prompt),
+        # content=SiteService.generate_site_mock(),
         media_type="text/html; charset=utf-8",
     )
 
@@ -93,7 +81,7 @@ async def generate_site(
     response_model_by_alias=False,
 )
 async def get_site(site_id: int):
-    site_data = SiteResponse(**site_mock_data)
-    if site_id == site_data.id:
-        return site_data
+    site_data = SiteService.get_site(site_id)
+    if site_data:
+        return SiteResponse(**site_data)
     return SiteNotFoundResponse(**{"detail": f"Site with ID {site_id} not found"})
