@@ -16,6 +16,16 @@ class UnsplashSettings(BaseSettings):
     timeout: int = 20
 
 
+class S3Settings(BaseSettings):
+    endpoint_url: str
+    login: SecretStr
+    password: SecretStr
+    bucket: str
+    max_connections: int = Field(10, gt=0)
+    connect_timeout: int = 50
+    read_timeout: int = 30
+
+
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -27,6 +37,8 @@ class AppSettings(BaseSettings):
     debug: bool = False
     deepseek: DeepseekSettings
     unsplash: UnsplashSettings
+    s3: S3Settings
 
 
 settings = AppSettings()
+print(settings.model_dump())

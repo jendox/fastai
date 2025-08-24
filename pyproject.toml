@@ -10,6 +10,7 @@ Perfect for learning FastAPI, AI APIs, and cloud deployment.
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
+    "aioboto3>=15.1.0",
     "editorconfig-checker==3.2.1",
     "fastapi[standard]==0.115.12",
     "html-page-generator",
