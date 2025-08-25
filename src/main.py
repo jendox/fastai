@@ -7,13 +7,27 @@ from starlette.staticfiles import StaticFiles
 
 from src.config import settings
 from src.routes import frontend_router
+from src.services.s3 import AsyncS3Client
 
 
 @asynccontextmanager
 async def lifespan(fast_api_app: FastAPI):
     async with (
-        AsyncDeepseekClient.setup(settings.deepseek.api_key),
-        AsyncUnsplashClient.setup(settings.unsplash.api_key, timeout=3),
+        AsyncDeepseekClient.setup(
+            deepseek_api_key=settings.deepseek.api_key,
+        ),
+        AsyncUnsplashClient.setup(
+            unsplash_client_id=settings.unsplash.api_key,
+            timeout=settings.unsplash.timeout,
+        ),
+        AsyncS3Client.setup(
+            endpoint_url=settings.s3.endpoint_url,
+            login=settings.s3.login,
+            password=settings.s3.password,
+            max_pool_connections=settings.s3.max_connections,
+            connect_timeout=settings.s3.connect_timeout,
+            read_timeout=settings.s3.read_timeout,
+        ),
     ):
         yield
 

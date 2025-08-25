@@ -58,8 +58,8 @@ async def generate_site(
     request: SiteGenerationRequest,
 ):
     return StreamingResponse(
-        content=SiteService.generate_html(request.prompt),
-        # content=SiteService.generate_site_mock(),
+        # content=SiteService.generate_html(request.prompt),
+        content=SiteService.generate_site_mock(),
         media_type="text/html; charset=utf-8",
     )
 

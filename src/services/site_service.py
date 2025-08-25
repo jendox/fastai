@@ -13,14 +13,14 @@ __all__ = ("SiteService",)
 BASE_DIR = Path(__file__).parent.parent.parent
 
 site_mock_data = {
-    "created_at": datetime.fromisoformat("2025-06-15T18:29:56+00:00"),
-    "html_code_download_url": "https://dvmn.org/media/filer_public/d1/4b/d14bb4e8-d8b4-49cb-928d-fd04ecae46da/index.html?response-content-disposition=attachment",
-    "html_code_url": "https://dvmn.org/media/filer_public/d1/4b/d14bb4e8-d8b4-49cb-928d-fd04ecae46da/index.html",
+    "created_at": datetime.fromisoformat("2025-08-20T18:29:56+00:00"),
+    "html_code_download_url": "http://127.0.0.1:9000/my-public-bucket/index.html?response-content-disposition=attachment",
+    "html_code_url": "http://127.0.0.1:9000/my-public-bucket/index.html",
     "id": 1,
-    "prompt": "Стегозавры величественные гиганты Юрского периода",
-    "screenshot_url": "https://images.unsplash.com/photo-1729207512292-da69be60b05a",
-    "title": "Стегозавры",
-    "updated_at": datetime.fromisoformat("2025-06-15T18:29:56+00:00"),
+    "prompt": "Сайт любителей рыбалки",
+    "screenshot_url": "https://unsplash.com/photos/a-colorful-baby-mobile-with-animal-and-fruit-shapes-gIVlrVltWv8",
+    "title": "Рыболовные приключения",
+    "updated_at": datetime.fromisoformat("2025-08-20T18:29:56+00:00"),
 }
 
 
