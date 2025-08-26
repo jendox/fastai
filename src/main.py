@@ -22,8 +22,8 @@ async def lifespan(fast_api_app: FastAPI):
         ),
         AsyncS3Client.setup(
             endpoint_url=settings.s3.endpoint_url,
-            login=settings.s3.login,
-            password=settings.s3.password,
+            access_key=settings.s3.access_key,
+            secret_key=settings.s3.secret_key,
             max_pool_connections=settings.s3.max_connections,
             connect_timeout=settings.s3.connect_timeout,
             read_timeout=settings.s3.read_timeout,

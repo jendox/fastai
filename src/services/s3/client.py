@@ -1,14 +1,15 @@
 import os
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
-from typing import Any, Optional
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
+from dataclasses import dataclass
+from typing import Any, ClassVar, Optional, Self
 
 import aioboto3
 import aiofiles
-from aiobotocore.client import AioBaseClient
 from aiobotocore.config import AioConfig
 from aiofiles.threadpool.binary import AsyncBufferedReader
 from pydantic import SecretStr
+from types_aiobotocore_s3.client import S3Client
 
 from .exceptions import AsyncS3ClientError, UploadError
 from .schemas import ContentDispositionType, S3UploadParams
@@ -22,65 +23,47 @@ MINIMUM_ALLOWED_OBJECT_SIZE = 5 * 1024 * 1024  # 5MB
 MAX_CHUNK_SIZE = 100 * 1024 * 1024  # 100MB
 
 
+@dataclass(frozen=True)
+class _InitState:
+    session: aioboto3.Session
+    config: AioConfig
+    endpoint_url: str
+
+
 class AsyncS3Client:
     """Асинхронный клиент для работы с S3-совместимым хранилищем."""
 
-    _initialized_instance: Optional["AsyncS3Client"] = None
-    _is_initialized: bool = False
+    _state: ClassVar[Optional[_InitState]]
+
+    _client_manager: AbstractAsyncContextManager[S3Client] | None = None
+    _client: S3Client | None = None
 
     def __init__(self) -> None:
         """Инициализирует экземпляр клиента."""
-        if not self._is_initialized:
+        if self._state is None:
             raise AsyncS3ClientError(
                 "Клиент AsyncS3Client не был проинициализирован. "
                 "Воспользуйтесь методом setup() для инициализации клиента.",
             )
-        self._client_manager = None
-        self._client: AioBaseClient | None = None
-
-    @classmethod
-    def __initialize(
-        cls,
-        endpoint_url: str,
-        access_key: str,
-        secret_key: str,
-        max_pool_connections: int,
-        connect_timeout: int,
-        read_timeout: int,
-    ) -> None:
-        cls._initialized_instance.endpoint_url = endpoint_url
-        cls._initialized_instance.session = aioboto3.Session(
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-        )
-        cls._initialized_instance.config = AioConfig(
-            max_pool_connections=max_pool_connections,
-            connect_timeout=connect_timeout,
-            read_timeout=read_timeout,
-        )
-        cls._is_initialized = True
 
     @classmethod
     @asynccontextmanager
     async def setup(
         cls,
         endpoint_url: str,
-        login: str | SecretStr,
-        password: str | SecretStr,
+        access_key: str | SecretStr,
+        secret_key: str | SecretStr,
         max_pool_connections: int,
         connect_timeout: int,
         read_timeout: int,
     ) -> AsyncGenerator[None, None]:
         """
-        Инициализирует singleton-экземпляр клиента S3.
-
-        Предназначен для использования в lifespan FastAPI приложения. Должен быть вызван
-        один раз при старте приложения для настройки клиента.
+        Инициализирует конфигурацию клиента S3 (lifespan FastAPI)
 
         Args:
             endpoint_url: URL endpoint S3-совместимого хранилища
-            login: Логин (access key) для аутентификации
-            password: Пароль (secret key) для аутентификации
+            access_key: Логин для аутентификации
+            secret_key: Пароль для аутентификации
             max_pool_connections: Максимальное количество соединений в пуле
             connect_timeout: Таймаут подключения в секундах
             read_timeout: Таймаут чтения в секундах
@@ -88,26 +71,26 @@ class AsyncS3Client:
         Yields:
             None: Контекстный менеджер для управления жизненным циклом клиента
         """
-        access_key = login.get_secret_value() if isinstance(login, SecretStr) else login
-        secret_key = password.get_secret_value() if isinstance(password, SecretStr) else password
-
-        cls._initialized_instance = cls.__new__(cls)
-        cls.__initialize(
-            endpoint_url, access_key, secret_key, max_pool_connections, connect_timeout, read_timeout,
-        )
-
         try:
+            ak = cls._extract_secret(access_key)
+            sk = cls._extract_secret(secret_key)
+            session = cls._build_session(ak, sk)
+            config = cls._build_config(
+                max_pool_connections=max_pool_connections,
+                connect_timeout=connect_timeout,
+                read_timeout=read_timeout,
+            )
+            cls._set_state(endpoint_url=endpoint_url, session=session, config=config)
             yield
         finally:
-            cls._initialized_instance = None
-            cls._is_initialized = False
+            cls._reset_state()
 
-    async def __aenter__(self) -> "AsyncS3Client":
+    async def __aenter__(self) -> Self:
         """Вход в асинхронный контекстный менеджер."""
-        self._client_manager = self._initialized_instance.session.client(
+        self._client_manager = self._state.session.client(
             service_name=AWS_SERVICE_NAME,
-            config=self._initialized_instance.config,
-            endpoint_url=self._initialized_instance.endpoint_url,
+            config=self._state.config,
+            endpoint_url=self._state.endpoint_url,
         )
         self._client = await self._client_manager.__aenter__()
         return self
@@ -136,6 +119,10 @@ class AsyncS3Client:
         """
         async with cls() as client:
             yield client
+
+    # ──────────────────────────────────────────────────────────────────────
+    # Публичные операции
+    # ──────────────────────────────────────────────────────────────────────
 
     async def upload_file(
         self,
@@ -183,6 +170,10 @@ class AsyncS3Client:
 
         except Exception as e:
             raise UploadError(f"Ошибка загрузки файла: {str(e)}") from e
+
+    # ──────────────────────────────────────────────────────────────────────
+    # Внутренняя логика загрузок
+    # ──────────────────────────────────────────────────────────────────────
 
     async def _upload_stream(
         self,
@@ -285,3 +276,39 @@ class AsyncS3Client:
             Key=upload_params.key,
             UploadId=upload_id,
         )
+
+    # ──────────────────────────────────────────────────────────────────────
+    # Приватные хелперы (внутри класса — стандартный подход)
+    # ──────────────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _extract_secret(value: str | SecretStr) -> str:
+        return value.get_secret_value() if isinstance(value, SecretStr) else value
+
+    @staticmethod
+    def _build_session(access_key: str, secret_key: str) -> aioboto3.Session:
+        return aioboto3.Session(
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+        )
+
+    @staticmethod
+    def _build_config(
+        *,
+        max_pool_connections: int,
+        connect_timeout: int,
+        read_timeout: int,
+    ) -> AioConfig:
+        return AioConfig(
+            max_pool_connections=max_pool_connections,
+            connect_timeout=connect_timeout,
+            read_timeout=read_timeout,
+        )
+
+    @classmethod
+    def _set_state(cls, *, endpoint_url: str, session: aioboto3.Session, config: AioConfig):
+        cls._state = _InitState(endpoint_url=endpoint_url, session=session, config=config)
+
+    @classmethod
+    def _reset_state(cls) -> None:
+        cls._state = None

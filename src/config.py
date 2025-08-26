@@ -18,8 +18,8 @@ class UnsplashSettings(BaseSettings):
 
 class S3Settings(BaseSettings):
     endpoint_url: str
-    login: SecretStr
-    password: SecretStr
+    access_key: SecretStr
+    secret_key: SecretStr
     bucket: str
     max_connections: int = Field(10, gt=0)
     connect_timeout: int = 50

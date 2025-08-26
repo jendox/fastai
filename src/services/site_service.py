@@ -37,6 +37,11 @@ class SiteService:
                     yield data
                     await asyncio.sleep(1)
 
+                filepath = str(html_path)
+                await SiteService._upload_file(filepath, settings.s3.bucket, "index.html", "text/html")
+                filepath = filepath.replace("html", "png")
+                await SiteService._upload_file(filepath, settings.s3.bucket, "index.png", "image/png")
+
     @staticmethod
     def _save_html_file(content: str, filename: str = "index.html") -> str:
         html_path = BASE_DIR.joinpath("data", filename)
