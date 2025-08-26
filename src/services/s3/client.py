@@ -5,6 +5,7 @@ from typing import Any, Optional
 
 import aioboto3
 import aiofiles
+from aiobotocore.client import AioBaseClient
 from aiobotocore.config import AioConfig
 from aiofiles.threadpool.binary import AsyncBufferedReader
 from pydantic import SecretStr
@@ -35,7 +36,7 @@ class AsyncS3Client:
                 "Воспользуйтесь методом setup() для инициализации клиента.",
             )
         self._client_manager = None
-        self._client = None
+        self._client: AioBaseClient | None = None
 
     @classmethod
     def __initialize(
@@ -198,9 +199,8 @@ class AsyncS3Client:
 
     @staticmethod
     def _validate_chunk_size(chunk_size: int) -> int:
-        chunk_size = min(max(chunk_size, MINIMUM_ALLOWED_OBJECT_SIZE), MAX_CHUNK_SIZE)
-        chunk_size = (chunk_size + 8191) & ~8191
-        return chunk_size
+        chunk_size = max(chunk_size, MINIMUM_ALLOWED_OBJECT_SIZE)
+        return min(chunk_size, MAX_CHUNK_SIZE)
 
     @staticmethod
     def _validate_file_size(filepath: str, chunk_size: int) -> int:

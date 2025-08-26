@@ -1,5 +1,5 @@
 import asyncio
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 
 import anyio
@@ -10,6 +10,8 @@ from src.config import settings
 
 __all__ = ("SiteService",)
 
+from src.services.s3 import AsyncS3Client
+
 BASE_DIR = Path(__file__).parent.parent.parent
 
 site_mock_data = {
@@ -18,7 +20,7 @@ site_mock_data = {
     "html_code_url": "http://127.0.0.1:9000/my-public-bucket/index.html",
     "id": 1,
     "prompt": "Сайт любителей рыбалки",
-    "screenshot_url": "https://unsplash.com/photos/a-colorful-baby-mobile-with-animal-and-fruit-shapes-gIVlrVltWv8",
+    "screenshot_url": "http://127.0.0.1:9000/my-public-bucket/index.png",
     "title": "Рыболовные приключения",
     "updated_at": datetime.fromisoformat("2025-08-20T18:29:56+00:00"),
 }
@@ -26,7 +28,7 @@ site_mock_data = {
 
 class SiteService:
     @staticmethod
-    async def generate_site_mock(chunk_size: int = 1024):
+    async def mock_generate_site(chunk_size: int = 1024):
         html_path = BASE_DIR.joinpath("data", "index.html")
         with open(html_path, encoding="utf-8") as file:
             with anyio.CancelScope(shield=True):
@@ -36,21 +38,21 @@ class SiteService:
                     await asyncio.sleep(1)
 
     @staticmethod
-    def _save_html_file(content: str, filename: str = "index.html") -> None:
+    def _save_html_file(content: str, filename: str = "index.html") -> str:
         html_path = BASE_DIR.joinpath("data", filename)
         with open(html_path, "w", encoding="utf-8") as file:
             file.write(content)
+        return str(html_path)
 
     @staticmethod
-    def _update_site_mock_data(prompt: str, title: str, filename: str = "index.html") -> None:
-        site_url = f"http://127.0.0.1:8000/data/{filename}"
-        download_url = f"{site_url}?response-content-disposition=attachment"
-        created_at = datetime.now(UTC)
-        site_mock_data["prompt"] = prompt
-        site_mock_data["title"] = title
-        site_mock_data["html_code_url"] = site_url
-        site_mock_data["html_code_download_url"] = download_url
-        site_mock_data["created_at"] = site_mock_data["updated_at"] = created_at
+    async def _upload_file(filepath: str, bucket: str, key: str, content_type: str):
+        async with AsyncS3Client.get_client() as client:
+            await client.upload_file(
+                bucket=bucket,
+                key=key,
+                filepath=filepath,
+                content_type=content_type,
+            )
 
     @staticmethod
     async def generate_html(user_prompt: str):
@@ -61,8 +63,10 @@ class SiteService:
                     print(chunk, end="", flush=True)
                     yield chunk
 
-                SiteService._save_html_file(generator.html_page.html_code)
-                SiteService._update_site_mock_data(user_prompt, generator.html_page.title)
+                filepath = SiteService._save_html_file(generator.html_page.html_code)
+                await SiteService._upload_file(filepath, settings.s3.bucket, "index.html", "text/html")
+                filepath = filepath.replace("html", "png")
+                await SiteService._upload_file(filepath, settings.s3.bucket, "index.png", "image/png")
 
         except (openai.AuthenticationError, openai.APIStatusError):
             raise
