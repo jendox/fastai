@@ -65,6 +65,7 @@ class SiteResponse(SiteSchema):
         alias_generator=to_camel,
         validate_by_name=True,
         validate_by_alias=True,
+        extra="forbid",
         json_schema_extra={
             "examples": [site_response_example],
         },
@@ -78,6 +79,7 @@ class GeneratedSitesResponse(BaseModel):
         alias_generator=to_camel,
         validate_by_name=True,
         validate_by_alias=True,
+        extra="forbid",
         json_schema_extra={
             "examples": [{"sites": [site_response_example]}],
         },
@@ -91,6 +93,7 @@ class SiteNotFoundResponse(BaseModel):
         alias_generator=to_camel,
         validate_by_name=True,
         validate_by_alias=True,
+        extra="forbid",
         json_schema_extra={
             "examples": [{"detail": "Site with ID 1 not found"}],
         },
