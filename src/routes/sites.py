@@ -6,8 +6,7 @@ from pydantic.alias_generators import to_camel
 from starlette.responses import HTMLResponse, StreamingResponse
 
 from src.schemas import SiteSchema
-from src.services import SiteService
-from src.services.site_service import SiteNotFoundError
+from src.services import SiteGenerator, SiteNotFoundError, SiteRepository
 
 router = APIRouter(prefix="/sites")
 
@@ -112,7 +111,8 @@ class SiteNotFoundResponse(BaseModel):
     response_model_by_alias=False,
 )
 async def get_my_sites() -> GeneratedSitesResponse:
-    return GeneratedSitesResponse(**SiteService.get_my_sites())
+    sites = SiteRepository.get_user_sites()
+    return GeneratedSitesResponse(**sites)
 
 
 @router.post(
@@ -125,7 +125,8 @@ async def get_my_sites() -> GeneratedSitesResponse:
 async def create_site(
     request: CreateSiteRequest,
 ) -> SiteResponse:
-    return SiteResponse(**SiteService.create_site())
+    new_site = SiteRepository.create()
+    return SiteResponse(**new_site)
 
 
 @router.post(
@@ -149,8 +150,8 @@ async def generate_site(
     request: SiteGenerationRequest,
 ):
     return StreamingResponse(
-        # content=SiteService.generate_html(request.prompt),
-        content=SiteService.mock_generate_site(),
+        # content=SiteGenerator.generate_from_prompt(request.prompt),
+        content=SiteGenerator.mock_generate_from_prompt(),
         media_type="text/html; charset=utf-8",
     )
 
@@ -173,7 +174,7 @@ async def generate_site(
 )
 async def get_site(site_id: int) -> SiteResponse:
     try:
-        site_data = SiteService.get_site(site_id)
+        site_data = SiteRepository.get_by_id(site_id)
         return SiteResponse(**site_data)
     except SiteNotFoundError:
         raise HTTPException(
