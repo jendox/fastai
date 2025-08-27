@@ -199,5 +199,154 @@ app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 > 🔄 Если вы недавно обновили файл `frontend-settings.json`, но браузер использует старую версию — сделайте **Hard Refresh** (`Ctrl + F5`), чтобы сбросить кэш.
 
----
+## Установка и настройка MinIO (для Ubuntu)
 
+Для локальной разработки мы используем [MinIO](https://min.io) — S3-совместимое хранилище.
+
+### Установка MinIO Server
+
+Скачайте и установите MinIO сервер:
+
+```bash
+wget https://dl.min.io/server/minio/release/linux-amd64/minio_20250723155402.0.0_amd64.deb
+sudo dpkg -i minio_20250723155402.0.0_amd64.deb
+minio --version
+```
+
+### Установка MinIO Client (mc)
+
+Скачайте и установите клиент для работы с MinIO:
+
+```bash
+sudo dnf install https://dl.min.io/client/mc/release/linux-amd64/mcli-20250721052808.0.0-1.x86_64.rpm
+mc --version
+```
+
+### Настройка MinIO
+
+#### Создание пользователя и директорий
+
+Создаем пользователя minio-user
+```bash
+sudo useradd -r minio-user -s /sbin/nologin
+```
+Создаем директории для данных и конфигурации
+```bash
+sudo mkdir -p /opt/minio/data
+sudo mkdir -p /etc/minio
+```
+Назначаем права
+```bash
+sudo chown -R minio-user:minio-user /opt/minio
+sudo chown -R minio-user:minio-user /etc/minio
+```
+
+#### Создание файла конфигурации сервиса
+
+```bash
+sudo nano /etc/systemd/system/minio.service
+```
+Добавляем в файл:
+```ini
+[Unit]
+Description=MinIO
+Documentation=https://min.io/docs/minio/linux/index.html
+Wants=network-online.target
+After=network-online.target
+AssertFileIsExecutable=/usr/local/bin/minio
+
+[Service]
+WorkingDirectory=/usr/local
+User=minio-user
+Group=minio-user
+ProtectProc=invisible
+EnvironmentFile=-/etc/default/minio
+ExecStartPre=/bin/bash -c "if [ -z \"${MINIO_VOLUMES}\" ]; then echo 'Variable MINIO_VOLUMES not set in /etc/default/minio'; exit 1; fi"
+ExecStart=/usr/local/bin/minio server $MINIO_OPTS $MINIO_VOLUMES
+
+# Let systemd restart this service always
+Restart=always
+# Specifies the maximum file descriptor number that can be opened by this process
+LimitNOFILE=65536
+# Disable timeout logic and wait until process is stopped
+TimeoutStopSec=infinity
+SendSIGKILL=no
+
+[Install]
+WantedBy=multi-user.target
+```
+#### Создание файла окружения
+
+```bash
+sudo nano /etc/default/minio
+```
+
+Добавляем в файл:
+```ini
+# Минимальные настройки
+MINIO_VOLUMES="/opt/minio/data"
+MINIO_OPTS="--address :9000 --console-address :9001"
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+
+# Дополнительные настройки (опционально)
+# MINIO_REGION=us-east-1
+# MINIO_BROWSER=on
+```
+
+### Запуск MinIO
+
+Перезагружаем systemd
+```bash
+sudo systemctl daemon-reload
+```
+Включаем автозагрузку
+```bash
+sudo systemctl enable minio
+```
+Запускаем сервис
+```bash
+sudo systemctl start minio
+```
+Проверяем статус
+```bash
+sudo systemctl status minio
+```
+
+### Настройка фаервола (если запущен)
+
+Разрешаем порты MinIO
+```bash
+sudo ufw allow 9000
+```
+```bash
+sudo ufw allow 9001
+```
+
+### Доступ к веб-интерфейсу
+
+#### Откройте браузер и перейдите по адресу:
+
+Консоль управления: http://127.0.0.1:9001
+
+API endpoint: http://127.0.0.1:9000
+
+Логин: minioadmin
+
+Пароль: minioadmin
+
+
+### Создание публичного бакета с помощью MinIO Client (mc)
+
+Настройка alias
+```bash
+mc alias set myminio http://localhost:9000 minioadmin minioadmin
+```
+Создание бакета
+```bash
+mc mb myminio/my-public-bucket
+```
+Установка публичного доступа
+```bash
+mc anonymous set download myminio/my-public-bucket
+```
