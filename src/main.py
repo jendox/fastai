@@ -5,13 +5,14 @@ from fastapi import FastAPI
 from html_page_generator import AsyncDeepseekClient, AsyncUnsplashClient
 from starlette.staticfiles import StaticFiles
 
-from src.config import settings
+from src import config
 from src.routes import frontend_router
 from src.services.s3 import AsyncS3Client
 
 
 @asynccontextmanager
-async def lifespan(fast_api_app: FastAPI):
+async def lifespan(_app: FastAPI):
+    settings = config.app_settings.get()
     async with (
         AsyncDeepseekClient.setup(
             deepseek_api_key=settings.deepseek.api_key,
@@ -32,6 +33,7 @@ async def lifespan(fast_api_app: FastAPI):
         yield
 
 
+config.app_settings.set(config.AppSettings.load())
 app = FastAPI(
     title="🚀 FastAI Website Generator – AI-Powered Instant Websites",
     description=dedent("""\
@@ -43,7 +45,7 @@ app = FastAPI(
         and cloud services.
         """,
     ),
-    debug=settings.debug,
+    debug=config.app_settings.get().app_debug,
     lifespan=lifespan,
 )
 

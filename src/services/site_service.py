@@ -6,11 +6,13 @@ import anyio
 import openai
 from html_page_generator import AsyncPageGenerator
 
-from src.config import settings
-
-__all__ = ("SiteService",)
-
+from src.config import app_settings
 from src.services.s3 import AsyncS3Client
+
+__all__ = (
+    "SiteService",
+    "SiteNotFoundError",
+)
 
 BASE_DIR = Path(__file__).parent.parent.parent
 
@@ -26,9 +28,13 @@ site_mock_data = {
 }
 
 
+class SiteNotFoundError(Exception): ...
+
+
 class SiteService:
     @staticmethod
     async def mock_generate_site(chunk_size: int = 1024):
+        settings = app_settings.get()
         html_path = BASE_DIR.joinpath("data", "index.html")
         with open(html_path, encoding="utf-8") as file:
             with anyio.CancelScope(shield=True):
@@ -61,8 +67,9 @@ class SiteService:
 
     @staticmethod
     async def generate_html(user_prompt: str):
+        settings = app_settings.get()
         try:
-            generator = AsyncPageGenerator(debug_mode=settings.debug)
+            generator = AsyncPageGenerator(debug_mode=True)
             with anyio.CancelScope(shield=True):
                 async for chunk in generator(user_prompt):
                     print(chunk, end="", flush=True)
@@ -83,8 +90,10 @@ class SiteService:
         return {"sites": [site_mock_data]}
 
     @staticmethod
-    def get_site(site_id: int) -> dict | None:
-        return site_mock_data if site_id == site_mock_data["id"] else None
+    def get_site(site_id: int) -> dict:
+        if site_id == site_mock_data["id"]:
+            return site_mock_data
+        raise SiteNotFoundError(f"Site with ID {site_id} not found")
 
     @staticmethod
     def create_site() -> dict:

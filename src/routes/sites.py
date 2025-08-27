@@ -1,17 +1,105 @@
-from fastapi import APIRouter
+from datetime import datetime
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 from starlette.responses import HTMLResponse, StreamingResponse
 
-from src.schemas import (
-    CreateSiteRequest,
-    GeneratedSitesResponse,
-    SiteGenerationRequest,
-    SiteNotFoundResponse,
-    SiteResponse,
-)
+from src.schemas import SiteSchema
 from src.services import SiteService
+from src.services.site_service import SiteNotFoundError
 
 router = APIRouter(prefix="/sites")
 
+SITE_TITLE_EXAMPLE = "Фан клуб Домино"
+SITE_PROMPT_EXAMPLE = "Сайт любителей играть в домино"
+
+site_response_example = {
+    "created_at": datetime.fromisoformat("2025-06-15T18:29:56+00:00"),
+    "html_code_download_url": "http://example.com/media/index.html?response-content-disposition=attachment",
+    "html_code_url": "http://example.com/media/index.html",
+    "id": 1,
+    "prompt": SITE_PROMPT_EXAMPLE,
+    "screenshot_url": "http://example.com/media/index.png",
+    "title": SITE_TITLE_EXAMPLE,
+    "updated_at": datetime.fromisoformat("2025-06-15T18:29:56+00:00"),
+}
+
+
+# ========================================================
+# REQUESTS SCHEMAS
+# ========================================================
+
+class CreateSiteRequest(BaseModel):
+    title: str | None = Field(None, max_length=128)
+    prompt: str
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [{
+                "prompt": SITE_PROMPT_EXAMPLE,
+                "title": SITE_TITLE_EXAMPLE,
+            }],
+        },
+    )
+
+
+class SiteGenerationRequest(BaseModel):
+    prompt: str | None = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [{
+                "prompt": SITE_PROMPT_EXAMPLE,
+            }],
+        },
+    )
+
+
+# ========================================================
+# RESPONSES SCHEMAS
+# ========================================================
+
+class SiteResponse(SiteSchema):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        validate_by_name=True,
+        validate_by_alias=True,
+        json_schema_extra={
+            "examples": [site_response_example],
+        },
+    )
+
+
+class GeneratedSitesResponse(BaseModel):
+    sites: list[SiteSchema]
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        validate_by_name=True,
+        validate_by_alias=True,
+        json_schema_extra={
+            "examples": [{"sites": [site_response_example]}],
+        },
+    )
+
+
+class SiteNotFoundResponse(BaseModel):
+    detail: str
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        validate_by_name=True,
+        validate_by_alias=True,
+        json_schema_extra={
+            "examples": [{"detail": "Site with ID 1 not found"}],
+        },
+    )
+
+
+# ========================================================
+# ROUTES
+# ========================================================
 
 @router.get(
     path="/my",
@@ -80,8 +168,12 @@ async def generate_site(
     },
     response_model_by_alias=False,
 )
-async def get_site(site_id: int):
-    site_data = SiteService.get_site(site_id)
-    if site_data:
+async def get_site(site_id: int) -> SiteResponse:
+    try:
+        site_data = SiteService.get_site(site_id)
         return SiteResponse(**site_data)
-    return SiteNotFoundResponse(**{"detail": f"Site with ID {site_id} not found"})
+    except SiteNotFoundError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Site with ID {site_id} not found",
+        )
