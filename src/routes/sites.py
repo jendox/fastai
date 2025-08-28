@@ -108,7 +108,6 @@ class SiteNotFoundResponse(BaseModel):
     summary="Получить список сгенерированных сайтов текущего пользователя",
     tags=["Sites"],
     response_model=GeneratedSitesResponse,
-    response_model_by_alias=False,
 )
 async def get_my_sites() -> GeneratedSitesResponse:
     sites = SiteRepository.get_user_sites()
@@ -120,7 +119,6 @@ async def get_my_sites() -> GeneratedSitesResponse:
     summary="Создать сайт",
     tags=["Sites"],
     response_model=SiteResponse,
-    response_model_by_alias=False,
 )
 async def create_site(
     request: CreateSiteRequest,
@@ -170,7 +168,6 @@ async def generate_site(
             "model": SiteNotFoundResponse,
         },
     },
-    response_model_by_alias=False,
 )
 async def get_site(site_id: int) -> SiteResponse:
     try:

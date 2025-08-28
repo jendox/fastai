@@ -73,7 +73,6 @@ def get_current_user() -> UserDetailsResponse:
             "model": UserUnauthorizedResponse,
         },
     },
-    response_model_by_alias=False,
 )
 async def get_me() -> UserDetailsResponse:
     return get_current_user()

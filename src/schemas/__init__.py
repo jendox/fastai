@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 
 class SiteSchema(BaseModel):
@@ -13,3 +14,9 @@ class SiteSchema(BaseModel):
     prompt: str
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        validate_by_name=True,
+        validate_by_alias=True,
+    )
