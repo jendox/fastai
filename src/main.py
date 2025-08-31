@@ -7,6 +7,7 @@ from starlette.staticfiles import StaticFiles
 
 from src import config
 from src.routes import frontend_router
+from src.services import AsyncGotenbergClient
 from src.services.s3 import AsyncS3Client
 
 
@@ -28,6 +29,14 @@ async def lifespan(_app: FastAPI):
             max_pool_connections=settings.s3.max_connections,
             connect_timeout=settings.s3.connect_timeout,
             read_timeout=settings.s3.read_timeout,
+        ),
+        AsyncGotenbergClient.setup(
+            api_url=settings.gotenberg.api_url,
+            max_connections=settings.gotenberg.max_connections,
+            screenshot_format=settings.gotenberg.screenshot_format,
+            screenshot_width=settings.gotenberg.screenshot_width,
+            screenshot_timeout=settings.gotenberg.screenshot_timeout,
+            screenshot_animation_delay=settings.gotenberg.screenshot_animation_delay,
         ),
     ):
         yield

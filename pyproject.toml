@@ -14,6 +14,7 @@ dependencies = [
     "boto3-stubs==1.40.17",
     "editorconfig-checker==3.2.1",
     "fastapi[standard]==0.115.12",
+    "gotenberg-api",
     "html-page-generator",
     "pre-commit>=4.2.0",
     "pydantic-settings>=2.10.1",
@@ -23,3 +24,4 @@ dependencies = [
 
 [tool.uv.sources]
 html-page-generator = { git = "https://github.com/devmanorg/html-page-generator.git" }
+gotenberg-api = { git = "https://github.com/devmanorg/gotenberg-api.git" }

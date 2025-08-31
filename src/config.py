@@ -1,5 +1,6 @@
 import re
 from contextvars import ContextVar
+from typing import Literal
 
 from pydantic import BaseModel, Field, SecretStr, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -7,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 __all__ = (
     "AppSettings",
     "app_settings",
+    "GotenbergImageFormat",
 )
 
 app_settings: ContextVar["AppSettings"] = ContextVar("app_settings")
@@ -15,13 +17,15 @@ BUCKET_REGEXP = r"^[a-z0-9][a-z0-9.-]*[a-z0-9]$"
 IP_REGEXP = r"^\d+\.\d+\.\d+\.\d+$"
 S3_RESERVED_PREFIXES = ('xn--', 'sthree-', 'sthree-config')
 
+GotenbergImageFormat = Literal["png", "jpeg", "webp"]
+
 
 class DeepseekSettings(BaseModel):
     api_key: SecretStr
     """API ключ для Deepseek"""
     max_connections: int = Field(5, gt=0)
     """Максимальное количество соединений"""
-    timeout: int = Field(5, ge=1)
+    timeout: float = 5
     """Таймаут запросов в секундах"""
 
 
@@ -30,7 +34,7 @@ class UnsplashSettings(BaseModel):
     """API ключ для Unsplash"""
     max_connections: int = Field(5, gt=0)
     """Максимальное количество соединений"""
-    timeout: int = Field(20, ge=1)
+    timeout: float = 20
     """Таймаут запросов в секундах"""
 
 
@@ -59,9 +63,9 @@ class S3Settings(BaseModel):
     """
     max_connections: int = Field(10, gt=0)
     """Максимальное количество одновременных подключений к S3"""
-    connect_timeout: int = 50
+    connect_timeout: float = 50
     """Таймаут подключения к S3 в секундах"""
-    read_timeout: int = 30
+    read_timeout: float = 30
     """Таймаут чтения данных из S3 в секундах"""
 
     @field_validator("endpoint_url", mode="after")
@@ -89,11 +93,38 @@ class S3Settings(BaseModel):
         return value
 
 
+class GotenbergSettings(BaseModel):
+    api_url: str
+    """URL API сервера Gotenberg
+    Примеры:\n
+    - Локальный сервер: http://127.0.0.1:3000\n
+    - Демо-версия API Gotenberg: https://demo.gotenberg.dev
+    """
+    max_connections: int = Field(5, gt=0)
+    """Максимальное количество одновременных подключений к Gotenberg API"""
+    screenshot_width: int = Field(ge=375, le=1920)
+    """Ширина скриншота в пикселях"""
+    screenshot_format: GotenbergImageFormat
+    """Формат изображения для скриншотов
+    Поддерживаемые форматы: jpeg, png, webp
+    """
+    screenshot_timeout: float = 10
+    """Таймаут генерации скриншотов в секундах"""
+    screenshot_animation_delay: float = 8
+    """Задержка перед скриншотом для анимаций в секундах
+    Важно: время ожидания завершения анимаций должно быть меньше таймаута асинхронного клиента,
+    иначе всегда будет TimeoutError.\n
+    Рекомендуемая разница между временем ожидания и таймаутом составляет от 2 до 5 секунд.
+    """
+
+
 class AppSettings(BaseSettings):
     app_debug: bool = False
+    page_generator_debug: bool = False
     deepseek: DeepseekSettings
     unsplash: UnsplashSettings
     s3: S3Settings
+    gotenberg: GotenbergSettings
 
     @classmethod
     def load(cls) -> "AppSettings":
