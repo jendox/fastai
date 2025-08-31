@@ -68,6 +68,7 @@ class S3Settings(BaseModel):
     read_timeout: float = 30
     """Таймаут чтения данных из S3 в секундах"""
 
+    @classmethod
     @field_validator("endpoint_url", mode="after")
     def _validate_endpoint_url(cls, value: str) -> str:
         if not value.strip():
@@ -77,6 +78,7 @@ class S3Settings(BaseModel):
         value = value.rstrip("/")
         return value
 
+    @classmethod
     @field_validator("bucket", mode="after")
     def _validate_bucket_name(cls, value: str) -> str:
         if not re.match(BUCKET_REGEXP, value):
