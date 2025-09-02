@@ -14,14 +14,14 @@ SITE_TITLE_EXAMPLE = "Фан клуб Домино"
 SITE_PROMPT_EXAMPLE = "Сайт любителей играть в домино"
 
 site_response_example = {
-    "created_at": datetime.fromisoformat("2025-06-15T18:29:56+00:00"),
-    "html_code_download_url": "http://example.com/media/index.html?response-content-disposition=attachment",
-    "html_code_url": "http://example.com/media/index.html",
+    "createdAt": datetime.fromisoformat("2025-06-15T18:29:56+00:00"),
+    "htmlCodeDownloadUrl": "http://example.com/media/index.html?response-content-disposition=attachment",
+    "htmlCodeUrl": "http://example.com/media/index.html",
     "id": 1,
     "prompt": SITE_PROMPT_EXAMPLE,
-    "screenshot_url": "http://example.com/media/index.png",
+    "screenshotUrl": "http://example.com/media/index.png",
     "title": SITE_TITLE_EXAMPLE,
-    "updated_at": datetime.fromisoformat("2025-06-15T18:29:56+00:00"),
+    "updatedAt": datetime.fromisoformat("2025-06-15T18:29:56+00:00"),
 }
 
 

@@ -9,10 +9,10 @@ router = APIRouter(prefix="/users")
 
 mock_user_data = {
     "email": "jendox1985@gmail.com",
-    "is_active": True,
-    "profile_id": 1,
-    "registered_at": datetime.fromisoformat("2025-08-07T18:29:56+00:00"),
-    "updated_at": datetime.fromisoformat("2025-08-07T18:29:56+00:00"),
+    "isActive": True,
+    "profileId": 1,
+    "registeredAt": datetime.fromisoformat("2025-08-07T18:29:56+00:00"),
+    "updatedAt": datetime.fromisoformat("2025-08-07T18:29:56+00:00"),
     "username": "jendox",
 }
 

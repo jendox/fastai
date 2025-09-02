@@ -132,4 +132,23 @@ Unsplash предоставляет бесплатное API для поиска
 | `S3__CONNECT_TIMEOUT` | `50` | Таймаут установления соединения с S3 (в секундах) |
 | `S3__READ_TIMEOUT` | `30` | Таймаут операций чтения/записи с S3 (в секундах) |
 
+## Настройка работы с Gotenberg
 
+Для работы с Gotenberg (создание скриншотов сгенерированной HTML-страницы) необходимо настроить следующие переменные в файле .env:
+
+| Переменная | Значение по умолчанию | Описание |
+| :--- | :--- | :--- |
+| `GOTENBERG__API_URL` | `https://demo.gotenberg.dev` | Базовый URL Gotenberg API |
+| `GOTENBERG__SCREENSHOT_WIDTH` | `1000` | Ширина скриншота в пикселях |
+| `GOTENBERG__SCREENSHOT_FORMAT` | `png` | Формат скриншота (`jpeg`, `png`, `webp`) |
+| `GOTENBERG__SCREENSHOT_TIMEOUT` | `15` | Таймаут выполнения запроса к Gotenberg (в секундах) |
+| `GOTENBERG__SCREENSHOT_ANIMATION_DELAY` | `8` | Время ожидания завершения анимаций на странице перед созданием скриншота (в секундах) |
+| `GOTENBERG__MAX_CONNECTIONS` | `5` | Максимальное количество одновременных соединений с Gotenberg API |
+
+Используйте URL https://demo.gotenberg.dev для работы с демо-версией API Gotenberg
+
+> ℹ️ **Рекомендации по настройке**
+>
+> Значение `GOTENBERG__SCREENSHOT_ANIMATION_DELAY` должно быть **меньше**, чем `GOTENBERG__SCREENSHOT_TIMEOUT`, иначе будет выбрасываться `TimeoutError`.
+> Рекомендуемая разница между `SCREENSHOT_TIMEOUT` и `SCREENSHOT_ANIMATION_DELAY` составляет **2–5 секунд**.
+> Если страница содержит тяжёлые анимации или большие скрипты, увеличьте `SCREENSHOT_TIMEOUT`, сохраняя указанную разницу.
