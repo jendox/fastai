@@ -5,8 +5,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 from starlette.responses import HTMLResponse, StreamingResponse
 
-from src.schemas import SiteSchema
 from src.services import SiteGenerator, SiteNotFoundError, SiteRepository
+
+from .reusable_types import Site
 
 router = APIRouter(prefix="/sites")
 
@@ -59,7 +60,7 @@ class SiteGenerationRequest(BaseModel):
 # RESPONSES SCHEMAS
 # ========================================================
 
-class SiteResponse(SiteSchema):
+class SiteResponse(Site):
     model_config = ConfigDict(
         alias_generator=to_camel,
         validate_by_name=True,
@@ -72,7 +73,7 @@ class SiteResponse(SiteSchema):
 
 
 class GeneratedSitesResponse(BaseModel):
-    sites: list[SiteSchema]
+    sites: list[Site]
 
     model_config = ConfigDict(
         alias_generator=to_camel,
@@ -111,7 +112,7 @@ class SiteNotFoundResponse(BaseModel):
 )
 async def get_my_sites() -> GeneratedSitesResponse:
     sites = SiteRepository.get_user_sites()
-    return GeneratedSitesResponse(**sites)
+    return GeneratedSitesResponse(**{"sites": sites})
 
 
 @router.post(

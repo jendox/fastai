@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
 
-class SiteSchema(BaseModel):
+class Site(BaseModel):
     """Общая схема сайта"""
     id: int
     title: str

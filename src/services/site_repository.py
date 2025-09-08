@@ -28,8 +28,8 @@ class SiteRepository:
         raise SiteNotFoundError(f"Site with ID {site_id} not found")
 
     @staticmethod
-    def get_user_sites() -> dict:
-        return {"sites": [site_mock_data]}
+    def get_user_sites() -> list:
+        return [site_mock_data]
 
     @staticmethod
     def create() -> dict:
