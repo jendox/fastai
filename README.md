@@ -69,15 +69,16 @@
 
 ### Описание переменных в `.env`
 
-| Переменная | Значение по умолчанию | Описание |
-| :--- | :--- | :--- |
-| `DEBUG` | `true` | Включает подробный вывод ошибок и логов для разработки. Для продакшена установите в `false`. |
-| `DEEPSEEK__API_KEY` | `your-deepseek-api-key` | Ваш секретный API-ключ для доступа к DeepSeek API. |
-| `DEEPSEEK__MAX_CONNECTIONS` | `5` | Максимальное количество одновременных подключений к API DeepSeek. |
-| `DEEPSEEK__TIMEOUT` | `5` | Таймаут (в секундах) для запросов к DeepSeek API. |
-| `UNSPLASH__API_KEY` | `your-unsplash-access-key` | Ваш Access Key для доступа к Unsplash API. |
-| `UNSPLASH__MAX_CONNECTIONS` | `5` | Максимальное количество одновременных подключений к API Unsplash. |
-| `UNSPLASH__TIMEOUT` | `20` | Таймаут (в секундах) для запросов к Unsplash API. |
+| Переменная                  | Значение по умолчанию      | Описание                                                                                           |
+|:----------------------------|:---------------------------|:---------------------------------------------------------------------------------------------------|
+| `APP_DEBUG`                 | `false`                    | Включает подробный вывод ошибок и логов для разработки. Для продакшена установите в `false`.       |
+| `PAGE_GENERATOR_DEBUG`      | `false`                    | Включает подробный вывод генератора HTML-страницы. Для продакшена установите в `false`. |
+| `DEEPSEEK__API_KEY`         | `your-deepseek-api-key`    | Ваш секретный API-ключ для доступа к DeepSeek API.                                                 |
+| `DEEPSEEK__MAX_CONNECTIONS` | `5`                        | Максимальное количество одновременных подключений к API DeepSeek.                                  |
+| `DEEPSEEK__TIMEOUT`         | `5`                        | Таймаут (в секундах) для запросов к DeepSeek API.                                                  |
+| `UNSPLASH__API_KEY`         | `your-unsplash-access-key` | Ваш Access Key для доступа к Unsplash API.                                                         |
+| `UNSPLASH__MAX_CONNECTIONS` | `5`                        | Максимальное количество одновременных подключений к API Unsplash.                                  |
+| `UNSPLASH__TIMEOUT`         | `20`                       | Таймаут (в секундах) для запросов к Unsplash API.                                                  |
 
 ### Как получить значения для переменных
 
