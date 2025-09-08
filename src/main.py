@@ -6,7 +6,7 @@ from html_page_generator import AsyncDeepseekClient, AsyncUnsplashClient
 from starlette.staticfiles import StaticFiles
 
 from src import config
-from src.routes import frontend_router
+from src.frontend_routes import frontend_router
 from src.services import AsyncGotenbergClient
 from src.services.s3 import AsyncS3Client
 
@@ -59,5 +59,5 @@ app = FastAPI(
 )
 
 app.include_router(frontend_router)
-app.mount("/data", StaticFiles(directory="data", html=True), name="data")
+app.mount("/media", StaticFiles(directory="media", html=True), name="media")
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")

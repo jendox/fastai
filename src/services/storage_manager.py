@@ -16,14 +16,14 @@ BASE_STORAGE_DIR = Path(__file__).parent.parent.parent
 class StorageManager:
     @staticmethod
     async def save_generated_site(content: str, filename: str) -> str:
-        filepath = BASE_STORAGE_DIR.joinpath("data", filename)
+        filepath = BASE_STORAGE_DIR.joinpath("media", filename)
         async with aiofiles.open(filepath, "w", encoding="utf-8") as file:
             await file.write(content)
         return str(filepath)
 
     @staticmethod
     async def save_generated_screenshot(content: bytes, filename: str) -> str:
-        filepath = BASE_STORAGE_DIR.joinpath("data", filename)
+        filepath = BASE_STORAGE_DIR.joinpath("media", filename)
         async with aiofiles.open(filepath, "wb") as file:
             await file.write(content)
         return str(filepath)

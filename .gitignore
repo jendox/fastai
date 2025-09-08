@@ -8,4 +8,4 @@ tmp*
 .DS_Store
 frontend/
 run.py
-data/
+media/

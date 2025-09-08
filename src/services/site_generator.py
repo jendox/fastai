@@ -18,7 +18,7 @@ __all__ = (
 class SiteGenerator:
     @staticmethod
     async def mock_generate_from_prompt(chunk_size: int = 1024):
-        html_path = BASE_STORAGE_DIR.joinpath("data", "index.html")
+        html_path = BASE_STORAGE_DIR.joinpath("media", "index.html")
         content = ""
         async with aiofiles.open(html_path, encoding="utf-8") as file:
             with anyio.CancelScope(shield=True):
