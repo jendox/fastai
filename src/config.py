@@ -1,8 +1,8 @@
 import re
 from contextvars import ContextVar
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, SecretStr, ValidationError, field_validator
+from pydantic import AfterValidator, BaseModel, Field, SecretStr, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 __all__ = (
@@ -18,6 +18,35 @@ IP_REGEXP = r"^\d+\.\d+\.\d+\.\d+$"
 S3_RESERVED_PREFIXES = ('xn--', 'sthree-', 'sthree-config')
 
 GotenbergImageFormat = Literal["png", "jpeg", "webp"]
+
+
+def validate_url(value: str) -> str:
+    if not value.startswith(("http://", "https://")):
+        raise ValueError("URL должен начинаться с 'http://' или 'https://'")
+    return value.rstrip("/")
+
+
+def validate_bucket_name(value: str) -> str:
+    if not re.match(BUCKET_REGEXP, value):
+        raise ValueError(
+            "Имя бакета может содержать только строчные буквы, цифры, точки и дефисы. "
+            "Должно начинаться и заканчиваться буквой или цифрой.",
+        )
+    if re.match(IP_REGEXP, value):
+        raise ValueError("Имя бакета не может быть IP-адресом.")
+    if ".." in value or ".-" in value or "-." in value:
+        raise ValueError("Имя бакета не может содержать последовательные точки и дефисы.")
+    if value.startswith(S3_RESERVED_PREFIXES):
+        raise ValueError("Имя бакета содержит зарезервированный префикс.")
+    return value
+
+
+HttpUrl = Annotated[str, AfterValidator(validate_url)]
+BucketName = Annotated[
+    str,
+    Field(..., min_length=3, max_length=63),
+    AfterValidator(validate_bucket_name),
+]
 
 
 class DeepseekSettings(BaseModel):
@@ -39,7 +68,7 @@ class UnsplashSettings(BaseModel):
 
 
 class S3Settings(BaseModel):
-    endpoint_url: str
+    endpoint_url: HttpUrl
     """Адрес S3-совместимого хранилища
     Примеры:\n
     - Локальный MinIO: http://localhost:9000\n
@@ -51,7 +80,7 @@ class S3Settings(BaseModel):
     """Access key ID для аутентификации в S3-совместимом хранилище"""
     secret_key: SecretStr
     """Secret access key для аутентификации в S3-совместимом хранилище"""
-    bucket: str = Field(..., min_length=3, max_length=63)
+    bucket: BucketName
     """Имя S3 бакета
     Требования:\n
     - Длина 3-63 символа\n
@@ -68,35 +97,9 @@ class S3Settings(BaseModel):
     read_timeout: float = 30
     """Таймаут чтения данных из S3 в секундах"""
 
-    @classmethod
-    @field_validator("endpoint_url", mode="after")
-    def _validate_endpoint_url(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("Endpoint URL не может быть пустым")
-        if not value.startswith(("http://", "https://")):
-            value = "https://" + value
-        value = value.rstrip("/")
-        return value
-
-    @classmethod
-    @field_validator("bucket", mode="after")
-    def _validate_bucket_name(cls, value: str) -> str:
-        if not re.match(BUCKET_REGEXP, value):
-            raise ValueError(
-                "Имя бакета может содержать только строчные буквы, цифры, точки и дефисы. "
-                "Должно начинаться и заканчиваться буквой или цифрой.",
-            )
-        if re.match(IP_REGEXP, value):
-            raise ValueError("Имя бакета не может быть IP-адресом")
-        if ".." in value or ".-" in value or "-." in value:
-            raise ValueError("Имя бакета не может содержать последовательные точки и дефисы")
-        if value.startswith(S3_RESERVED_PREFIXES):
-            raise ValueError("Имя бакета содержит зарезервированный префикс")
-        return value
-
 
 class GotenbergSettings(BaseModel):
-    api_url: str
+    api_url: HttpUrl
     """URL API сервера Gotenberg
     Примеры:\n
     - Локальный сервер: http://127.0.0.1:3000\n
