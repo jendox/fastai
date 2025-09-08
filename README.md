@@ -146,8 +146,6 @@ Unsplash предоставляет бесплатное API для поиска
 | `GOTENBERG__SCREENSHOT_ANIMATION_DELAY` | `8` | Время ожидания завершения анимаций на странице перед созданием скриншота (в секундах) |
 | `GOTENBERG__MAX_CONNECTIONS` | `5` | Максимальное количество одновременных соединений с Gotenberg API |
 
-Используйте URL https://demo.gotenberg.dev для работы с демо-версией API Gotenberg
-
 > ℹ️ **Рекомендации по настройке**
 >
 > Значение `GOTENBERG__SCREENSHOT_ANIMATION_DELAY` должно быть меньше, чем `GOTENBERG__SCREENSHOT_TIMEOUT`, иначе будет выбрасываться `TimeoutError`.
