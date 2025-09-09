@@ -5,7 +5,7 @@ import anyio
 from html_page_generator import AsyncPageGenerator
 
 from src.config import app_settings
-from src.services.gotenberg import AsyncGotenbergClient
+from src.libs.gotenberg_client.client import AsyncGotenbergClient
 from src.services.s3 import AsyncS3Client
 from src.services.s3.schemas import S3UploadParams
 from src.services.storage_manager import BASE_STORAGE_DIR, StorageManager
@@ -57,7 +57,7 @@ class SiteGenerator:
 
     @staticmethod
     async def _create_screenshot(raw_html: str) -> bytes:
-        return await AsyncGotenbergClient.screenshot_from_html(raw_html)
+        return await AsyncGotenbergClient.create_screenshot_from_html(raw_html)
 
     @staticmethod
     async def _upload_screenshot(image: bytes, bucket_key: str = "index.png"):

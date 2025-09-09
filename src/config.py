@@ -1,14 +1,15 @@
 import re
 from contextvars import ContextVar
-from typing import Annotated, Literal
+from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, Field, SecretStr, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from src.libs.gotenberg_client import GotenbergImageFormat
+
 __all__ = (
     "AppSettings",
     "app_settings",
-    "GotenbergImageFormat",
 )
 
 app_settings: ContextVar["AppSettings"] = ContextVar("app_settings")
@@ -16,13 +17,12 @@ app_settings: ContextVar["AppSettings"] = ContextVar("app_settings")
 BUCKET_REGEXP = r"^[a-z0-9][a-z0-9.-]*[a-z0-9]$"
 IP_REGEXP = r"^\d+\.\d+\.\d+\.\d+$"
 S3_RESERVED_PREFIXES = ('xn--', 'sthree-', 'sthree-config')
-
-GotenbergImageFormat = Literal["png", "jpeg", "webp"]
+VALID_PROTOCOLS = "http://", "https://"
 
 
 def validate_url(value: str) -> str:
-    if not value.startswith(("http://", "https://")):
-        raise ValueError("URL должен начинаться с 'http://' или 'https://'")
+    if not value.startswith(VALID_PROTOCOLS):
+        raise ValueError(f"URL должен начинаться с протокола ({', '.join(VALID_PROTOCOLS)}).")
     return value.rstrip("/")
 
 

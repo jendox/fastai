@@ -1,27 +1,20 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import ClassVar, Self
+from typing import ClassVar, Literal, Self
 
 import httpx
 from gotenberg_api import GotenbergServerError, ScreenshotHTMLRequest
 from httpx import Limits, Timeout
 
-from src.config import GotenbergImageFormat
+from .exceptions import GotenbergAsyncClientError, HTMLScreenshotError
 
 __all__ = (
     "AsyncGotenbergClient",
-    "HTMLScreenshotError",
+    "GotenbergImageFormat",
 )
 
 MAX_SCREENSHOT_WIDTH = 8192
-
-
-class GotenbergAsyncClientError(Exception):
-    """Базовое исключение для ошибок клиента Gotenberg"""
-
-
-class HTMLScreenshotError(GotenbergAsyncClientError):
-    """Ошибка создания скриншота HTML страницы"""
+GotenbergImageFormat = Literal["png", "jpeg", "webp"]
 
 
 class AsyncGotenbergClient(httpx.AsyncClient):
@@ -95,7 +88,7 @@ class AsyncGotenbergClient(httpx.AsyncClient):
         )
 
     @classmethod
-    async def screenshot_from_html(
+    async def create_screenshot_from_html(
         cls,
         raw_html: str,
         image_width: int | None = None,

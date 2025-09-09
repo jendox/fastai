@@ -7,7 +7,7 @@ from starlette.staticfiles import StaticFiles
 
 from src import config
 from src.frontend_routes import frontend_router
-from src.services import AsyncGotenbergClient
+from src.libs.gotenberg_client import AsyncGotenbergClient
 from src.services.s3 import AsyncS3Client
 
 
