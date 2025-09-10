@@ -5,7 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 from starlette.responses import HTMLResponse, StreamingResponse
 
-from src.services import SiteGenerator, SiteNotFoundError, SiteRepository
+from src.mock_orm.site_repo import SiteNotFoundError, SiteRepository
+from src.site_generator import stream_and_publish
 
 from .reusable_types import Site
 
@@ -111,7 +112,7 @@ class SiteNotFoundResponse(BaseModel):
     response_model=GeneratedSitesResponse,
 )
 async def get_my_sites() -> GeneratedSitesResponse:
-    sites = SiteRepository.get_user_sites()
+    sites = SiteRepository.get_all()
     return GeneratedSitesResponse(**{"sites": sites})
 
 
@@ -149,8 +150,8 @@ async def generate_site(
     request: SiteGenerationRequest,
 ):
     return StreamingResponse(
-        content=SiteGenerator.generate_from_prompt(request.prompt),
-        # content=SiteGenerator.mock_generate_from_prompt(),
+        content=stream_and_publish(request.prompt),
+        # content=mock_stream_and_publish(),
         media_type="text/html; charset=utf-8",
     )
 
