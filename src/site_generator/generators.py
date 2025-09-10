@@ -16,6 +16,8 @@ __all__ = (
 )
 
 BASE_STORAGE_DIR = Path(os.getcwd())
+HTML_PATH = BASE_STORAGE_DIR / "media" / "index.html"
+IMAGE_PATH = BASE_STORAGE_DIR / "media" / "index.png"
 
 
 async def stream_and_publish(user_prompt: str):
@@ -85,14 +87,12 @@ async def mock_stream_and_publish(chunk_size: int = 1024):
 
 
 async def _save_generated_html(raw_html: str):
-    filepath = BASE_STORAGE_DIR.joinpath("media", "index.html")
-    async with aiofiles.open(filepath, "w", encoding="utf-8") as file:
+    async with aiofiles.open(HTML_PATH, "w", encoding="utf-8") as file:
         await file.write(raw_html)
 
 
 async def _save_image(image: bytes):
-    filepath = BASE_STORAGE_DIR.joinpath("media", "index.png")
-    async with aiofiles.open(filepath, "wb") as file:
+    async with aiofiles.open(IMAGE_PATH, "wb") as file:
         await file.write(image)
 
 
