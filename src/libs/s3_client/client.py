@@ -15,6 +15,10 @@ __all__ = (
 )
 
 
+def extract_secret(value: str | SecretStr) -> str:
+    return value.get_secret_value() if isinstance(value, SecretStr) else value
+
+
 class AsyncS3Client:
     """Асинхронный клиент для взаимодействия с S3-совместимым объектным хранилищем.
 
@@ -61,8 +65,8 @@ class AsyncS3Client:
         Raises:
             AsyncS3ClientError: При ошибках инициализации клиента.
         """
-        ak = cls._extract_secret(access_key)
-        sk = cls._extract_secret(secret_key)
+        ak = extract_secret(access_key)
+        sk = extract_secret(secret_key)
         session = aioboto3.Session(aws_access_key_id=ak, aws_secret_access_key=sk)
         config = AioConfig(
             max_pool_connections=max_pool_connections,
@@ -120,8 +124,4 @@ class AsyncS3Client:
         try:
             await client.put_object(**upload_params.to_s3_kwargs())
         except Exception as e:
-            raise UploadError(str(e), bucket=upload_params.bucket, key=upload_params.key)
-
-    @staticmethod
-    def _extract_secret(value: str | SecretStr) -> str:
-        return value.get_secret_value() if isinstance(value, SecretStr) else value
+            raise UploadError(str(e)) from e

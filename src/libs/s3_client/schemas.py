@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, field_validator
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict
 from pydantic.alias_generators import to_pascal
 
 __all__ = (
@@ -36,8 +36,15 @@ def validate_mime(value: str) -> str:
     return value
 
 
+def validate_body(value: str | bytes) -> bytes:
+    if isinstance(value, str):
+        return value.encode(encoding="utf-8")
+    return value
+
+
 BucketKey = Annotated[str, AfterValidator(normalize_key)]
 MimeType = Annotated[str, AfterValidator(validate_mime)]
+ByteContent = Annotated[bytes, BeforeValidator(validate_body)]
 ContentDispositionType = Literal["inline", "attachment"]
 
 
@@ -46,7 +53,7 @@ class S3UploadParams(BaseModel):
     """Название бакета S3"""
     key: BucketKey
     """Ключ (путь) объекта внутри бакета"""
-    body: str | bytes
+    body: ByteContent
     """Содержимое объекта. str автоматически преобразуется в bytes"""
     content_type: MimeType
     """MIME-тип содержимого (например, 'text/plain', 'image/png')"""
@@ -56,13 +63,6 @@ class S3UploadParams(BaseModel):
     """Пользовательские метаданные в формате key→value (оба значения — строки)"""
 
     model_config = s3_upload_params_config
-
-    @classmethod
-    @field_validator("body", mode="after")
-    def encode_body(cls, value: str | bytes) -> bytes:
-        if isinstance(value, str):
-            return value.encode(encoding="utf-8")
-        return value
 
     def to_s3_kwargs(self) -> dict:
         """Возвращает словарь параметров для передачи в aioboto3 (PascalCase, без None)."""
